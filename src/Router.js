@@ -231,11 +231,11 @@ class AppRouter extends React.Component {
           {/* <AppRoute exact path="/" component={analyticsDashboard} />
           <AppRoute path="/pages/login" component={Login} fullLayout /> */}
           {/* CRM  */}
-          <AppRoute exact path="/" component={(props) => (localStorage.crmtoken ? (<Redirect to="/dashboard" />) : (<CRMLogin {...props} />))} fullLayout  />
-          <AppRoute exact path='/dashboard' component={(props) => (!localStorage.crmtoken ? (<Redirect to="/" />) : (<CRMDashboard {...props} />))} />
+          <AppRoute exact path="/" component={(props) => (<Redirect to="/dashboard" />)} fullLayout  />
+          <AppRoute exact path='/dashboard' component={(props) =>  (<CRMDashboard {...props} />)} />
           <AppRoute path="/error/500" component={CRM500} fullLayout />
-          <AppRoute exact path='/workCategory' component={(props) => (!localStorage.crmtoken ? (<Redirect to="/" />) : (<CRMWorkCategory {...props} />))} />
-          <AppRoute exact path='/createAlbum' component={(props) => (!localStorage.crmtoken ? (<Redirect to="/" />) : (<CRMAlbum {...props} />))} />
+          <AppRoute exact path='/workCategory' component={(props) => (<CRMWorkCategory {...props} />)} />
+          <AppRoute exact path='/createAlbum' component={(props) => (<CRMAlbum {...props} />)} />
 
 
 

@@ -34,7 +34,7 @@ export const login = (state = { userRole: "Admin" }, action) => {
       return { ...state, values: action.payload }
     }
     case "CHANGE_ROLE": {
-      return { ...state, userRole: action.userRole }
+      return { ...state, userRole: 'Admin' }
     }
     default: {
       return state

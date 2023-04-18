@@ -27,6 +27,7 @@ import './style.css'
 import Avatar from '../../components/@vuexy/avatar/AvatarComponent'
 // import { useDropzone } from "react-dropzone"
 import Dropzone from 'react-dropzone';
+import axios from 'axios'
 
 const chipColors = {
     "on hold": "warning",
@@ -176,18 +177,37 @@ class createAlbum extends Component {
     enableButton = () => {
         const { client, category, coverPic, bridePic, groomPic, message, album } = this.state
         this.setState({
-            buttonStatus: client !== '' && category !== '' && coverPic !== '' && bridePic !== '' &&
-                groomPic !== '' && message !== '' && album.length !== 0
+            buttonStatus:
+                // client !== '' && category !== '' && coverPic !== '' && bridePic !== '' &&
+                // groomPic !== '' && message !== '' && 
+                album.length !== 0
         })
     }
 
     onCopy = () => {
         // this.setState({ copied: true })
         toast.success("Profile URL Copied Successfully", {
-          position: toast.POSITION.TOP_CENTER,
-          autoClose: 2000
+            position: toast.POSITION.TOP_CENTER,
+            autoClose: 2000
         })
-      }
+    }
+
+    saveAlbum = async () => {
+        let events = this.state.album.map((item) => ({ eventId: 456, images: item.images }))
+        const formData = new FormData();
+        formData.append('workId', 123);
+        formData.append('events', events)
+
+        // make a POST request with Axios
+        const res = await axios.post('http://44.207.226.125:5000/image', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                "Authorization": `Manager Staff e62704f86aca2d8414e50bec614936cf332b2505626dec04d17f0adb64e5c84b78dfdca2be69d3de82e4e40b712cfc151fc8bd0d7b0995835cd8208f3288790cb92ae4ab21a4d6f639556ad5f72a91ccb46a594f124cecca3ee4f68e36fe3667`
+            },
+        });
+
+        console.log(res);
+    }
 
 
     render() {
@@ -272,7 +292,7 @@ class createAlbum extends Component {
                                 // className="add-new-btn"
                                 color="primary"
                                 disabled={!buttonStatus}
-                                // onClick={() => props.handleAddCategory()}
+                                onClick={() => this.saveAlbum()}
                                 filled>
                                 <span className="align-middle">Save</span>
                             </Button>
