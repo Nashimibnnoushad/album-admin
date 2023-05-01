@@ -219,9 +219,9 @@ class createAlbum extends Component {
 
     saveAlbum = async () => {
         let events = this.state.album.map((item) => ({ eventId: 1, images: item.path }))
-        const formData = new FormData();
-        formData.append('workId', 123);
-        formData.append('events', events)
+        // const formData = new FormData();
+        // formData.append('workId', 123);
+        // formData.append('events', events)
         // let sendData = {
         //     "workId": 123,
         //     "events": events
@@ -236,11 +236,14 @@ class createAlbum extends Component {
 
         // window.saveAs(fileToSave, fileName);
 
-
+        const formData = {
+            "events": events,
+            "workId": 2
+        }
         // make a POST request with Axios
         const res = await axios.post('http://localhost:5000/image', formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
+                // 'Content-Type': 'multipart/form-data',
                 "Authorization": `Manager Staff e62704f86aca2d8414e50bec614936cf332b2505626dec04d17f0adb64e5c84b78dfdca2be69d3de82e4e40b712cfc151fc8bd0d7b0995835cd8208f3288790cb92ae4ab21a4d6f639556ad5f72a91ccb46a594f124cecca3ee4f68e36fe3667`
             },
         });
