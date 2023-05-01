@@ -28,6 +28,7 @@ import Avatar from '../../components/@vuexy/avatar/AvatarComponent'
 // import { useDropzone } from "react-dropzone"
 import Dropzone from 'react-dropzone';
 import axios from 'axios'
+import { saveAs } from "file-saver"
 
 const chipColors = {
     "on hold": "warning",
@@ -66,11 +67,11 @@ class createAlbum extends Component {
         this.state = {
             files: [],
             category: '',
-            categoryList: [{ 'id': 1, 'workCategory': 'Highlights' }, { 'id': 2, 'workCategory': 'Mehandi/Haldi' }, { 'id': 3, 'workCategory': 'Wedding' }, { 'id': 4, 'workCategory': 'Reception' }],
+            categoryList: [{ 'id': 'engagement', 'workCategory': 'Engagement' }],
             clientList: [{ 'id': 1, 'client': 'Client 1' }, { 'id': 2, 'client': 'Client 2' }, { 'id': 3, 'client': 'Client 3' }, { 'id': 4, 'client': 'Client 4' }],
             client: '',
             clienName: '',
-            active: 1,
+            active: 'engagement',
             album: [],
             coverPic: '',
             groomPic: '',
@@ -144,7 +145,10 @@ class createAlbum extends Component {
                 });
             }
         }
-        this.setState({ album: albumVal }, () => { this.enableButton() })
+        this.setState({ album: albumVal }, () => {
+            this.enableButton()
+            this.uploadFiles()
+        })
     };
 
     coverPicChange = (e) => {
@@ -192,14 +196,49 @@ class createAlbum extends Component {
         })
     }
 
+    uploadFiles = async () => {
+        let files = this.state.album[0].images
+        const formData = new FormData();
+        formData.append('files', files);
+        const res = await axios.post('http://localhost:5000/image/upload/engagement', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                "Authorization": `Manager Staff e62704f86aca2d8414e50bec614936cf332b2505626dec04d17f0adb64e5c84b78dfdca2be69d3de82e4e40b712cfc151fc8bd0d7b0995835cd8208f3288790cb92ae4ab21a4d6f639556ad5f72a91ccb46a594f124cecca3ee4f68e36fe3667`
+            },
+        });
+
+        let albumVal = this.state.album
+        for (let i = 0; i < albumVal.length; i++) {
+            if (albumVal[i].id == this.state.active) {
+                albumVal[i].path.push(res.data)
+            }
+        }
+        this.setState({ album: albumVal })
+
+    }
+
     saveAlbum = async () => {
-        let events = this.state.album.map((item) => ({ eventId: 456, images: item.images }))
+        let events = this.state.album.map((item) => ({ eventId: 1, images: item.path }))
         const formData = new FormData();
         formData.append('workId', 123);
         formData.append('events', events)
+        // let sendData = {
+        //     "workId": 123,
+        //     "events": events
+        // }
+        // console.log(sendData, 'sendData')
+        // let fileName = 'events.json';
+
+        // let fileToSave = new Blob([JSON.stringify(sendData, null, 4)], {
+        //     type: 'application/json',
+        //     name: fileName
+        // });
+
+        // window.saveAs(fileToSave, fileName);
+
 
         // make a POST request with Axios
-        const res = await axios.post('http://44.207.226.125:5000/image', formData, {
+        const res = await axios.post('http://localhost:5000/image', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 "Authorization": `Manager Staff e62704f86aca2d8414e50bec614936cf332b2505626dec04d17f0adb64e5c84b78dfdca2be69d3de82e4e40b712cfc151fc8bd0d7b0995835cd8208f3288790cb92ae4ab21a4d6f639556ad5f72a91ccb46a594f124cecca3ee4f68e36fe3667`
