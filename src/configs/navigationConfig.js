@@ -9,14 +9,14 @@ const navigationConfig = [
     permissions: ["Admin"],
     navLink: "/dashboard"
   },
-  {
-    id: "work_category",
-    title: "Work Category",
-    type: "item",
-    icon: <Icon.FileText size={20} />,
-    permissions: ["Admin"],
-    navLink: "/workCategory"
-  },
+  // {
+  //   id: "work_category",
+  //   title: "Work Category",
+  //   type: "item",
+  //   icon: <Icon.FileText size={20} />,
+  //   permissions: ["Admin"],
+  //   navLink: "/workCategory"
+  // },
   {
     id: "albums",
     title: "Albums",

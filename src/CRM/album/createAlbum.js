@@ -28,8 +28,9 @@ import Avatar from '../../components/@vuexy/avatar/AvatarComponent'
 // import { useDropzone } from "react-dropzone"
 import Dropzone from 'react-dropzone';
 import axios from 'axios'
-import { saveAs } from "file-saver"
+import { BACKEND_URL } from "../../services/hostSetting"
 
+const token = JSON.parse(localStorage.getItem('crmtoken'))
 const chipColors = {
     "on hold": "warning",
     delivered: "success",
@@ -67,32 +68,83 @@ class createAlbum extends Component {
         this.state = {
             files: [],
             category: '',
-            categoryList: [{ 'id': 'engagement', 'workCategory': 'Engagement' }],
-            clientList: [{ 'id': 1, 'client': 'Client 1' }, { 'id': 2, 'client': 'Client 2' }, { 'id': 3, 'client': 'Client 3' }, { 'id': 4, 'client': 'Client 4' }],
+            categoryList: [
+                { 'id': 0, 'workCategory': 'Wedding', 'apiCall': 'wedding' },
+                { 'id': 1, 'workCategory': 'Engagement', 'apiCall': 'engagement' },
+                { 'id': 2, 'workCategory': 'Reception', 'apiCall': 'reception' },
+                { 'id': 3, 'workCategory': 'Save the Date', 'apiCall': 'savethedate' },
+                { 'id': 4, 'workCategory': 'Post Wedding', 'apiCall': 'postwedding' },
+                { 'id': 5, 'workCategory': 'Haldi', 'apiCall': 'haldi' },
+                { 'id': 6, 'workCategory': 'Mehandi', 'apiCall': 'mehandi' },
+            ],
+            clientList: [],
             client: '',
             clienName: '',
-            active: 'engagement',
+            active: '',
             album: [],
             coverPic: '',
             groomPic: '',
             bridePic: '',
             message: '',
-            buttonStatus: false
+            buttonStatus: false,
+            loading:false
         };
     }
 
 
-    componentDidMount() {
-
+    componentDidMount = async() => {
+        this.getClientList()
     }
 
 
     componentDidUpdate(prevProps, prevState) {
     }
 
+    capitalizeFirstLetter(string) {
+        let str1 = string.toLowerCase()
+        let str2 = str1.charAt(0).toUpperCase()
+        let str3 = str1.slice(1)
+        let str4 = str2 + str3
+        return str4;
+    }
+
+    getClientList = async() =>{
+        const res = await axios.get(`${BACKEND_URL}client`, {
+            headers: {
+                "Authorization": `Staff ${token}`
+            },
+        });
+        this.setState({
+            clientList: res?.data?.length > 0 ? res.data.map(function(val){return {'id': val.id, 'client': val.clientTitleName }}) : []
+        })
+    }
+
+    getClientDetails = async() =>{
+        this.setState({loading: true})
+        const res = await axios.get(`${BACKEND_URL}image/getimages?workid=${this.state.client}`, {
+            headers: {
+                "Authorization": `Staff ${token}`
+            },
+        });
+        let clientData = res.data
+        this.setState({
+            category: '',
+            active: clientData?.imageData?.length > 0 ? clientData?.imageData[0].eventId : '',
+            coverPic: clientData?.client?.coverPic ? clientData?.client?.coverPic : "",
+            groomPic: clientData?.client?.groomPic ? clientData?.client?.groomPic : "",
+            bridePic: clientData?.client?.bridePic ? clientData?.client?.bridePic : "",
+            message: clientData?.client?.description ? clientData?.client?.description : "",
+            album: clientData?.imageData?.length > 0 ? clientData?.imageData.map((item) => ({ id: item.eventId, categoryName: this.capitalizeFirstLetter(item.eventName), images: item.imagePath, path: item.imagePath })) : []
+        })
+        this.setState({loading: false})
+    }
+
     changeCategory = (value) => {
         let selectedCategory = this.state.categoryList.find((val) => val.id == value)
         this.setState({ category: value }, () => {
+            if(this.state.active === ''){
+                this.setState({active: selectedCategory.id})
+            }
             if (this.state.album.length > 0) {
                 let item = []
                 item = this.state.album.find((v) => v.id == selectedCategory.id)
@@ -115,14 +167,18 @@ class createAlbum extends Component {
                 }
                 let album = this.state.album
                 album.push(albumItem)
-                this.setState({ album: album }, () => { this.enableButton() })
+                this.setState({ album: album }, () => { this.enableButton()})
             }
         })
     }
 
     handleClientChange(value) {
+        this.setState({loading:true})
         let selectedClient = this.state.clientList.find((val) => val.id == value)
-        this.setState({ client: value, clienName: selectedClient.client }, () => { this.enableButton() })
+        this.setState({ client: value, clienName: selectedClient.client }, () => { 
+            this.getClientDetails()
+            this.enableButton() 
+        })
     }
 
     toggle = tab => {
@@ -140,14 +196,14 @@ class createAlbum extends Component {
         let albumVal = this.state.album
         for (let i = 0; i < albumVal.length; i++) {
             if (albumVal[i].id == this.state.active) {
-                newFiles.forEach(element => {
-                    albumVal[i].images.push(element)
-                });
+                let images = albumVal[i].images
+                let newImages = newFiles
+                albumVal[i].images = images.concat(newImages)
             }
         }
         this.setState({ album: albumVal }, () => {
             this.enableButton()
-            this.uploadFiles()
+            this.uploadFiles(files)
         })
     };
 
@@ -196,21 +252,29 @@ class createAlbum extends Component {
         })
     }
 
-    uploadFiles = async () => {
-        let files = this.state.album[0].images
+    uploadFiles = async (files) => {
+        // let files = this.state.album[0].images
+        let selectedCategory = this.state.categoryList.find((val) => val.id == this.state.active)
         const formData = new FormData();
-        formData.append('files', files);
-        const res = await axios.post('http://localhost:5000/image/upload/engagement', formData, {
+        for(let i=0;i<files.length;i++){
+            formData.append('files',files[i],files[i].name)
+        }
+        // formData.append('files', files);
+        const res = await axios.post(`${BACKEND_URL}image/upload/${selectedCategory.apiCall}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                "Authorization": `Manager Staff e62704f86aca2d8414e50bec614936cf332b2505626dec04d17f0adb64e5c84b78dfdca2be69d3de82e4e40b712cfc151fc8bd0d7b0995835cd8208f3288790cb92ae4ab21a4d6f639556ad5f72a91ccb46a594f124cecca3ee4f68e36fe3667`
+                "Authorization": `Staff ${token}`
             },
         });
-
         let albumVal = this.state.album
         for (let i = 0; i < albumVal.length; i++) {
             if (albumVal[i].id == this.state.active) {
-                albumVal[i].path.push(res.data)
+                if(albumVal[i].path===undefined){
+                    albumVal[i].path = res.data
+                }
+                else{
+                    res.data.map((val)=> albumVal[i].path.push(val))
+                }
             }
         }
         this.setState({ album: albumVal })
@@ -218,37 +282,25 @@ class createAlbum extends Component {
     }
 
     saveAlbum = async () => {
-        let events = this.state.album.map((item) => ({ eventId: 1, images: item.path }))
-        // const formData = new FormData();
-        // formData.append('workId', 123);
-        // formData.append('events', events)
-        // let sendData = {
-        //     "workId": 123,
-        //     "events": events
-        // }
-        // console.log(sendData, 'sendData')
-        // let fileName = 'events.json';
-
-        // let fileToSave = new Blob([JSON.stringify(sendData, null, 4)], {
-        //     type: 'application/json',
-        //     name: fileName
-        // });
-
-        // window.saveAs(fileToSave, fileName);
+        let events = this.state.album.map((item) => ({ eventId: item.id, images: item.path }))
 
         const formData = {
             "events": events,
-            "workId": 2
+            "workId": this.state.client
         }
-        // make a POST request with Axios
-        const res = await axios.post('http://localhost:5000/image', formData, {
+        const res = await axios.post(`${BACKEND_URL}image/submit`, formData, {
             headers: {
-                // 'Content-Type': 'multipart/form-data',
-                "Authorization": `Manager Staff e62704f86aca2d8414e50bec614936cf332b2505626dec04d17f0adb64e5c84b78dfdca2be69d3de82e4e40b712cfc151fc8bd0d7b0995835cd8208f3288790cb92ae4ab21a4d6f639556ad5f72a91ccb46a594f124cecca3ee4f68e36fe3667`
+                "Authorization": `Staff ${token}`
             },
         });
 
-        console.log(res);
+        if(res.status === 200){
+            toast.success("Client Details Saved Successfully", {
+                position: toast.POSITION.TOP_CENTER,
+                autoClose: 2000
+            })
+            this.getClientDetails()
+        }
     }
 
 
@@ -286,7 +338,8 @@ class createAlbum extends Component {
             groomPic,
             bridePic,
             message,
-            buttonStatus
+            buttonStatus,
+            loading
         } = this.state
         return (
             <>
@@ -307,7 +360,7 @@ class createAlbum extends Component {
                                 })}
                             </Input>
                         </FormGroup>
-                        {client !== '' &&
+                        {!loading && client !== '' &&
                             <>
                                 <FormGroup style={{ width: '300px' }} className="ml-2">
                                     <Label style={{ fontWeight: "bolder" }} for="category">Category<span style={{ color: 'red' }}>*</span></Label>
@@ -328,7 +381,7 @@ class createAlbum extends Component {
                         }
                     </div>
                     <div className="actions-right d-flex flex-wrap mt-sm-0 mt-2">
-                        {client !== '' &&
+                        {!loading && client !== '' &&
                             <Button
                                 style={(buttonStatus) ? { height: '40px', marginTop: '18px', marginLeft: '15px' } : { height: '40px', marginTop: '18px', marginLeft: '15px', cursor: 'not-allowed' }}
                                 // className="add-new-btn"
@@ -342,7 +395,7 @@ class createAlbum extends Component {
                     </div>
                 </div>
 
-                {client !== '' &&
+                {!loading && client !== '' &&
                     <>
                         {/* Url Create */}
                         <div style={{ marginTop: '15px', marginBottom: '15px' }}>
@@ -496,11 +549,11 @@ class createAlbum extends Component {
                                                         </Dropzone>
                                                         <div className="container-fluid">
                                                             <div id="outer-block">
-                                                                {album.find((v) => v.id === active).images.map((file) => {
+                                                                {album.find((v) => v.id === active).images.map((file,index) => {
                                                                     return (
-                                                                        <div className="items" key={file.name}>
+                                                                        <div className="items" key={index}>
                                                                             <div className="gallery animate-box">
-                                                                                <a className="gallery-img image-popup" href={file.preview}><img src={file.preview} className="img-responsive" alt={file.name} /></a>
+                                                                                <a className="gallery-img image-popup" href={file.preview?file.preview:file}><img src={file.preview?file.preview:file} className="img-responsive" alt={file.name?file.name:'images'} /></a>
                                                                             </div>
                                                                         </div>
                                                                     )

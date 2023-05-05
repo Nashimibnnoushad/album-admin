@@ -34,19 +34,19 @@ class LoginCRM extends React.Component {
   handleLogin = e => {
     e.preventDefault()
     this.setState({loading : true})
-    history.push("/dashboard")
-      // this.props.loginWithJWT(this.state).then(() => {
-      //   this.setState({loading : false})
-      //   console.log(this.props.loginValues,'login values')
-      //   if (this.props.loginValues && this.props.loginValues.loginResponse && this.props.loginValues.loginResponse.status === 1){
-      //       localStorage.setItem("crmtoken", JSON.stringify(this.props.loginValues.loginResponse.accessToken.value))
-      //       localStorage.setItem("crmuser", JSON.stringify(this.props.loginValues.loginResponse))
-      //       history.push("/dashboard")
-      //   }
-      //   if (this.props.loginValues && this.props.loginValues.loginError) {
-      //     notifyTopCenter()
-      //   }
-      // })
+    // history.push("/dashboard")
+      this.props.loginWithJWT(this.state).then(() => {
+        this.setState({loading : false})
+        console.log(this.props.loginValues,'login values')
+        if (this.props.loginValues && this.props.loginValues.loginResponse && this.props.loginValues.loginResponse.status === 1){
+            localStorage.setItem("crmtoken", JSON.stringify(this.props.loginValues.loginResponse.accessToken.value))
+            localStorage.setItem("crmuser", JSON.stringify(this.props.loginValues.loginResponse))
+            history.push("/dashboard")
+        }
+        if (this.props.loginValues && this.props.loginValues.loginError) {
+          notifyTopCenter()
+        }
+      })
   }
 
   render() {
